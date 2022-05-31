@@ -21,6 +21,7 @@ def get_args():
     parser.add_argument('--lr', default=0.001, type=float, help='learning rate')
     parser.add_argument('--early_stop', default=3, type=int, help='early stop')
     parser.add_argument('--save_dir', default='./weights/', type=str, help='save dir')
+    parser.add_argument('--weight', default=None, type=str, help='weight')
 
     return parser.parse_args()
 
@@ -100,7 +101,14 @@ if __name__ == '__main__':
     logging.info('Data loaded, train set: {}, val set: {}'.format(train_len, val_len))
 
     # model preparation
-    model = BCNN(fine_tune=False).to(device)
+    logging.info('Model initializating')
+    ft = True if args.weight is None else False    
+    model = BCNN(fine_tune=ft).to(device)
+    if args.weight is not None:
+        model.load_state_dict(torch.load(args.weight))
+
+    total_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
+    logging.info('Model BCNN has: {} learnable params'.format(total_params))
 
     criterion = nn.CrossEntropyLoss()
     optimizer = torch.optim.Adam(model.parameters(), lr=args.lr)

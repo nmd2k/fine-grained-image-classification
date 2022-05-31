@@ -1,5 +1,6 @@
 import os
 import argparse
+from tqdm import tqdm
 
 import torch
 
@@ -21,7 +22,7 @@ def test(model, device, test_loader, classes):
 
     with torch.no_grad():
         model.eval()
-        for data, labels in test_loader:
+        for data, labels in tqdm(test_loader):
             data, labels = data.to(device), labels.to(device)
             output = model(data)
             preds = torch.max(output, 1)[1]
@@ -45,8 +46,8 @@ if __name__ == '__main__':
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     # data prepare
-    test_set = FGVC_Dataset(args.data, is_train=False, is_test=True)
-    test_loader = torch.utils.data.DataLoader(test_set, batch_size=1, shuffle=False)
+    test_set = FGVC_Dataset(args.data, is_train=False)
+    test_loader = torch.utils.data.DataLoader(test_set, batch_size=64, shuffle=False)
     with open(os.path.join(args.data, 'variants.txt'), 'r') as f:
         classes = f.read().splitlines()
 
