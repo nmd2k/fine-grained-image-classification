@@ -5,7 +5,7 @@ import torch.nn.functional as F
 from torchvision import models
 
 
-n_features = 512  # resnet18-512, resnet34-512, resnet50-2048
+n_features = 2048  # resnet18-512, resnet34-512, resnet50-2048
 fmap_size = 7
 
 
@@ -14,7 +14,7 @@ class BCNN(nn.Module):
         
         super(BCNN, self).__init__()
         
-        resnet = models.resnet34(pretrained=True)
+        resnet = models.resnet50(pretrained=True)
         
         # freezing parameters
         if not fine_tune:

@@ -1,5 +1,6 @@
 import os
 import argparse
+from tqdm import tqdm
 
 import torch
 import torch.nn as nn
@@ -25,8 +26,9 @@ def get_args():
 
 
 def train(model, criterion, device, train_loader, optimizer):
-    train_loss, correct = 0, 0
-    for i, (images, labels) in enumerate(train_loader):
+    train_loss = 0
+    train_acc = []
+    for images, labels in (pbar := tqdm(train_loader, leave=False)):
         images = images.to(device)
         labels = labels.to(device)
 
@@ -40,19 +42,23 @@ def train(model, criterion, device, train_loader, optimizer):
         train_loss += loss.item()
 
         pred = torch.max(outputs, dim=1)[1]
-        correct += (pred == labels).sum().item()
+        correct = (pred == labels).sum().item()/len(labels)
+        train_acc.append(correct)
+
+        pbar.set_postfix(loss=f'{loss.item():.3f}', acc=f'{correct:.3f}')
     
     train_loss = train_loss / len(train_loader)
-    train_acc = correct / len(train_loader)
+    train_acc = sum(train_acc) / len(train_acc)
 
     return train_loss, train_acc
 
 
 def validate(model, criterion, device, val_loader):
-    valid_loss, correct = 0, 0
+    valid_loss = 0
+    valid_acc = []
     
     model.eval()
-    for i, (images, labels) in enumerate(val_loader):
+    for images, labels in (pbar := tqdm(val_loader, leave=False)):
         images = images.to(device)
         labels = labels.to(device)
 
@@ -62,11 +68,13 @@ def validate(model, criterion, device, val_loader):
         valid_loss += loss.item()
 
         pred = torch.max(outputs, 1)[1]
-        # correct = pred.eq(labels).sum().item()
-        correct += (pred == labels).sum().item()
+        correct = (pred == labels).sum().item()/len(labels)
+        valid_acc.append(correct)
+
+        pbar.set_postfix(loss=f'{loss.item():.3f}', acc=f'{correct:.3f}')
     
     valid_loss = valid_loss / len(val_loader)
-    valid_acc = correct / len(val_loader)
+    valid_acc = sum(valid_acc) / len(valid_acc)
     
     return valid_loss, valid_acc
 
