@@ -7,7 +7,7 @@ import torchvision.transforms as transforms
 
 
 class FGVC_Dataset(Dataset):
-    def __init__(self, data_path, is_train=True, is_test=False):
+    def __init__(self, data_path, is_train=True):
         self.data_path = data_path
         self.file_list = []
         label_map_file = os.path.join(data_path, 'variants.txt')
@@ -19,23 +19,23 @@ class FGVC_Dataset(Dataset):
         if is_train:
             self.transform = transforms.Compose([
                 transforms.ToPILImage(),
-                transforms.Resize(size=(224, 224)),
+                transforms.Resize(size=(512, 512)),
+                transforms.CenterCrop(size=(448, 448)),
                 transforms.RandomHorizontalFlip(),
                 transforms.ToTensor(),
                 transforms.Normalize(mean=(0.485, 0.456, 0.406), std=(0.229, 0.224, 0.225))
             ])
-            file_reader = 'images_train.txt'
+            file_reader = 'images_train_merged.txt'
 
         else:
             self.transform = transforms.Compose([
                 transforms.ToPILImage(),
-                transforms.Resize(size=(224, 224)),
+                transforms.Resize(size=(512, 512)),
+                transforms.CenterCrop(size=(448, 448)),
                 transforms.ToTensor(),
                 transforms.Normalize(mean=(0.485, 0.456, 0.406), std=(0.229, 0.224, 0.225))
             ])
-            if is_test:
-                file_reader = 'images_test.txt'
-            else: file_reader = 'images_val.txt'
+            file_reader = 'images_test.txt'
 
         with open(os.path.join(data_path, file_reader)) as f:
             self.file_list = f.read().splitlines()

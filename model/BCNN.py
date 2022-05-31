@@ -14,7 +14,7 @@ class BCNN(nn.Module):
         
         super(BCNN, self).__init__()
         
-        resnet = models.resnet50(pretrained=True)
+        resnet = models.resnet34(pretrained=True)
         
         # freezing parameters
         if not fine_tune:

@@ -4,7 +4,7 @@ from tqdm import tqdm
 
 import torch
 import torch.nn as nn
-from torch.utils.data import DataLoader
+from torch.utils.data import DataLoader, random_split
 
 from model.BCNN import BCNN
 from data_utils.data_loader import FGVC_Dataset
@@ -88,13 +88,16 @@ if __name__ == '__main__':
     logging.info('Train device: {}'.format(device))
     logging.info('Args: {}'.format(args))
 
+    torch.manual_seed(42)
     # data preparation
-    train_loader = FGVC_Dataset(args.data, is_train=True)
-    val_loader = FGVC_Dataset(args.data, is_train=False)
+    train_set = FGVC_Dataset(args.data, is_train=True)
+    train_len = int(len(train_set) * 0.8)
+    val_len = len(train_set) - train_len
+    train_set, val_set = random_split(train_set, [train_len, val_len])
 
-    train_set = DataLoader(train_loader, batch_size=args.bs, shuffle=True)
-    val_set = DataLoader(val_loader, batch_size=args.bs, shuffle=True)
-    logging.info('Data loaded, train set: {}, val set: {}'.format(len(train_set), len(val_set)))
+    train_loader = DataLoader(train_set, batch_size=args.bs, shuffle=True)
+    val_loader = DataLoader(val_set, batch_size=args.bs, shuffle=True)
+    logging.info('Data loaded, train set: {}, val set: {}'.format(train_len, val_len))
 
     # model preparation
     model = BCNN(fine_tune=False).to(device)
@@ -106,10 +109,10 @@ if __name__ == '__main__':
     logging.info('Start training')
     for epoch in range(args.epochs):
         print('Epoch: {}/{}'.format(epoch + 1, args.epochs))
-        t_loss, t_acc = train(model, criterion, device, train_set, optimizer)
+        t_loss, t_acc = train(model, criterion, device, train_loader, optimizer)
         print('Train Loss: {:.4f} Train Acc: {:.4f}'.format(t_loss, t_acc))
 
-        v_loss, v_acc = validate(model, criterion, device, val_set)
+        v_loss, v_acc = validate(model, criterion, device, val_loader)
         print('Validation Loss: {:.4f} Validation Acc: {:.4f}'.format(v_loss, v_acc))
 
         if v_acc > best_valid:

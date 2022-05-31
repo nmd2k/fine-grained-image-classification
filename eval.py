@@ -38,7 +38,7 @@ def test(model, device, test_loader, classes):
         print(f'Accuracy of {classname}: {acc:.1f}')
 
     avg /= len(correct_pred)
-    print(f'Average accuracy: {avg}')
+    print(f'===============================\nAverage accuracy: {avg}')
 
 if __name__ == '__main__':
     args = get_args()
