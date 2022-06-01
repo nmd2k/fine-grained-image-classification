@@ -2,6 +2,7 @@ import os
 import argparse
 from tqdm import tqdm
 
+import wandb
 import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader, random_split
@@ -22,6 +23,7 @@ def get_args():
     parser.add_argument('--early_stop', default=3, type=int, help='early stop')
     parser.add_argument('--save_dir', default='./weights/', type=str, help='save dir')
     parser.add_argument('--weight', default=None, type=str, help='weight')
+    parser.add_argument('--wdecay', default=5e-4, type=float, help='weight decay')
 
     return parser.parse_args()
 
@@ -88,6 +90,8 @@ if __name__ == '__main__':
 
     logging.info('Train device: {}'.format(device))
     logging.info('Args: {}'.format(args))
+    wb = wandb.init(project='fine-grained-classification',)
+    wb.config.update(args)
 
     torch.manual_seed(42)
     # data preparation
@@ -102,16 +106,21 @@ if __name__ == '__main__':
 
     # model preparation
     logging.info('Model initializating')
-    ft = True if args.weight is None else False    
-    model = BCNN(fine_tune=ft).to(device)
+    model = BCNN().to(device)
     if args.weight is not None:
         model.load_state_dict(torch.load(args.weight))
+        logging.info('Model loaded from {}'.format(args.weight))
+
+    wb.watch(model)
 
     total_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
     logging.info('Model BCNN has: {} learnable params'.format(total_params))
 
+    wb.config.update(total_params=total_params)
+
     criterion = nn.CrossEntropyLoss()
     optimizer = torch.optim.Adam(model.parameters(), lr=args.lr)
+    # optimizer = torch.optim.SGD(model.parameters(), lr=args.lr, weight_decay=args.wdecay, momentum=0.9)
 
     best_valid, count = 0, 0
     logging.info('Start training')
@@ -124,6 +133,7 @@ if __name__ == '__main__':
         print('Validation Loss: {:.4f} Validation Acc: {:.4f}'.format(v_loss, v_acc))
 
         if v_acc > best_valid:
+            count = 0
             best_valid = v_acc
             torch.save(model.state_dict(), os.path.join(args.save_dir, 'best_model.pt'))
             
@@ -132,3 +142,11 @@ if __name__ == '__main__':
             if count >= args.early_stop:
                 print('Early stopping at epoch {}'.format(epoch + 1))
                 break
+        
+        wb.log({'train/loss': t_loss, 
+                'train/acc': t_acc, 
+                'valid_loss': v_loss, 
+                'valid_acc': v_acc},)
+    
+    wb.run.summary['best_valid_acc'] = best_valid
+    logging.info('Training finished')
