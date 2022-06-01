@@ -116,7 +116,7 @@ if __name__ == '__main__':
     total_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
     logging.info('Model BCNN has: {} learnable params'.format(total_params))
 
-    wb.config.update(total_params=total_params)
+    wb.config['total_learnable_params'] = total_params
 
     criterion = nn.CrossEntropyLoss()
     optimizer = torch.optim.Adam(model.parameters(), lr=args.lr)
@@ -145,8 +145,8 @@ if __name__ == '__main__':
         
         wb.log({'train/loss': t_loss, 
                 'train/acc': t_acc, 
-                'valid_loss': v_loss, 
-                'valid_acc': v_acc},)
+                'valid/loss': v_loss, 
+                'valid/acc': v_acc},)
     
     wb.run.summary['best_valid_acc'] = best_valid
     logging.info('Training finished')
