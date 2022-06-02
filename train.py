@@ -7,7 +7,7 @@ import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader, random_split
 
-from model.BCNN import BCNN
+from model.BCNN import BCNN, simple_model
 from data_utils.data_loader import FGVC_Dataset
 
 import logging
@@ -114,7 +114,7 @@ if __name__ == '__main__':
     wb.watch(model)
 
     total_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
-    logging.info('Model BCNN has: {} learnable params'.format(total_params))
+    logging.info('Model has: {} learnable params'.format(total_params))
 
     wb.config['total_learnable_params'] = total_params
 
@@ -148,5 +148,5 @@ if __name__ == '__main__':
                 'valid/loss': v_loss, 
                 'valid/acc': v_acc},)
     
-    wb.run.summary['best_valid_acc'] = best_valid
+    wandb.run.summary['best_valid_acc'] = best_valid
     logging.info('Training finished')

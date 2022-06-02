@@ -5,7 +5,7 @@ from tqdm import tqdm
 import torch
 import wandb
 
-from model.BCNN import BCNN
+from model.BCNN import BCNN, simple_model
 from data_utils.data_loader import FGVC_Dataset
 
 
@@ -67,7 +67,7 @@ if __name__ == '__main__':
     summary, acc = test(model, device, test_loader, classes)
 
     # log
-    wb.run.summary['accuracy'] = acc
+    wandb.run.summary['accuracy'] = acc
     summary_table = wandb.Table(columns=['class name', 'accuracy'], data=summary)
     run_artifact = wandb.Artifact("model_" + str(wandb.run.id), type='model')
 
